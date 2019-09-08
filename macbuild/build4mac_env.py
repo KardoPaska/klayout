@@ -10,6 +10,8 @@
 #
 # This file is imported by 'build4mac.py' script.
 #===============================================================================
+import os
+MyHome = os.environ['HOME']
 
 #-----------------------------------------------------
 # [0] Xcode's tools
@@ -21,16 +23,7 @@ XcodeToolChain = { 'nameID': '/usr/bin/install_name_tool -id ',
 #-----------------------------------------------------
 # [1] Qt
 #-----------------------------------------------------
-Qts = [ 'Qt4MacPorts', 'Qt5MacPorts', 'Qt5Brew' ]
-
-#-----------------------------------------------------
-# Whereabout of different components of Qt4
-#-----------------------------------------------------
-# Qt4 from MacPorts (https://www.macports.org/)
-# [Key Type Name] = 'Qt4MacPorts'
-Qt4MacPorts = { 'qmake' : '/opt/local/libexec/qt4/bin/qmake',
-                'deploy': '/opt/local/libexec/qt4/bin/macdeployqt'
-              }
+Qts = [ 'Qt5MacPorts', 'Qt5Brew', 'Qt5Ana3' ]
 
 #-----------------------------------------------------
 # Whereabout of different components of Qt5
@@ -41,12 +34,17 @@ Qt5MacPorts = { 'qmake' : '/opt/local/libexec/qt5/bin/qmake',
                 'deploy': '/opt/local/libexec/qt5/bin/macdeployqt'
               }
 
-
 # Qt5 from Homebrew (https://brew.sh/)
 # install with 'brew install qt'
 # [Key Type Name] = 'Qt5Brew'
 Qt5Brew = { 'qmake' : '/usr/local/opt/qt/bin/qmake',
             'deploy': '/usr/local/opt/qt/bin/macdeployqt'
+          }
+
+# Qt5 bundled with anaconda3 installed under $HOME/anaconda3/
+# [Key Type Name] = 'Qt5Ana3'
+Qt5Ana3 = { 'qmake' : '%s/anaconda3/bin/qmake' % MyHome,
+            'deploy': '%s/anaconda3/bin/macdeployqt' % MyHome
           }
 
 # Qt5 Custom (https://www1.qt.io/offline-installers/)
@@ -55,7 +53,8 @@ Qt5Brew = { 'qmake' : '/usr/local/opt/qt/bin/qmake',
 # [2] Ruby
 #-----------------------------------------------------
 Rubies  = [ 'nil', 'RubyYosemite', 'RubyElCapitan', 'RubySierra', 'RubyHighSierra' ]
-Rubies += [ 'RubyMojave', 'Ruby24SrcBuild', 'Ruby24MacPorts', 'Ruby24Brew' ]
+Rubies += [ 'RubyMojave', 'Ruby24MacPorts', 'Ruby25Brew' ]
+Rubies += [ 'RubyAnaconda3' ]
 
 #-----------------------------------------------------
 # Whereabout of different components of Ruby
@@ -95,15 +94,6 @@ RubyMojave      = { 'exe': '/System/Library/Frameworks/Ruby.framework/Versions/2
                     'lib': '/System/Library/Frameworks/Ruby.framework/Versions/2.3/usr/lib/libruby.dylib'
                   }
 
-# Ruby 2.4 built from source code (https://github.com/ruby): *+*+*+ EXPERIMENTAL *+*+*+
-#   configured by:
-#       $ ./configure --prefix=$HOME/Ruby24/ --enable-shared --program-suffix=2.4
-# [Key Type Name] = 'Src24'
-Ruby24SrcBuild  = { 'exe': '$HOME/Ruby24/bin/ruby2.4',
-                    'inc': '$HOME/Ruby24/include/ruby-2.4.0',
-                    'lib': '$HOME/Ruby24/lib/libruby.2.4.dylib'
-                  }
-
 # Ruby 2.4 from MacPorts (https://www.macports.org/) *+*+*+ EXPERIMENTAL *+*+*+
 # [Key Type Name] = 'MP24'
 Ruby24MacPorts  = { 'exe': '/opt/local/bin/ruby2.4',
@@ -118,6 +108,14 @@ Ruby25Brew  = { 'exe': '/usr/local/bin/ruby',
                 'lib': '/usr/local/lib/libruby.2.5.0.dylib'
               }
 
+# Ruby 2.5 bundled with anaconda3 installed under $HOME/anaconda3/ *+*+*+ EXPERIMENTAL *+*+*+
+# If the version is 2.4.x in your anaconda3, change the version strings accordingly.
+# [Key Type Name] = 'RubyAnaconda3'
+RubyAnaconda3 = { 'exe': '%s/anaconda3/bin/ruby' % MyHome,
+                  'inc': '%s/anaconda3/include/ruby-2.5.0' % MyHome,
+                  'lib': '%s/anaconda3/lib/libruby.2.5.1.dylib' % MyHome
+                }
+
 # Consolidated dictionary kit for Ruby
 RubyDictionary  = { 'nil'           : None,
                     'RubyYosemite'  : RubyYosemite,
@@ -125,16 +123,17 @@ RubyDictionary  = { 'nil'           : None,
                     'RubySierra'    : RubySierra,
                     'RubyHighSierra': RubyHighSierra,
                     'RubyMojave'    : RubyMojave,
-                    'Ruby24SrcBuild': Ruby24SrcBuild,
                     'Ruby24MacPorts': Ruby24MacPorts,
-                    'Ruby25Brew'    : Ruby25Brew
+                    'Ruby25Brew'    : Ruby25Brew,
+                    'RubyAnaconda3' : RubyAnaconda3
                   }
 
 #-----------------------------------------------------
 # [3] Python
 #-----------------------------------------------------
 Pythons  = [ 'nil', 'PythonYosemite', 'PythonElCapitan', 'PythonSierra', 'PythonHighSierra' ]
-Pythons += [ 'PythonMojave', 'Anaconda27', 'Anaconda36', 'Python36MacPorts', 'Python37Brew' ]
+Pythons += [ 'PythonMojave', 'Python36MacPorts', 'Python37Brew' ]
+Pythons += [ 'PythonAnaconda3' ]
 
 #-----------------------------------------------------
 # Whereabout of different components of Python
@@ -174,28 +173,6 @@ PythonMojave    = { 'exe': '/System/Library/Frameworks/Python.framework/Versions
                     'lib': '/System/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib'
                   }
 
-# Using anaconda2 (https://www.anaconda.com/download/#macos) 5.0.1: *+*+*+ EXPERIMENTAL *+*+*+
-#   If the path to your `conda` command is '$HOME/anaconda2/bin/conda'
-#   and your Python environment was prepared by: $ conda create -n py27klayout python=2.7
-#
-#   No additional modules are installed in the experiment.
-# [Key Type Name] = 'Ana27'
-Anaconda27      = { 'exe': '$HOME/anaconda2/envs/py27klayout/bin/python2.7' ,
-                    'inc': '$HOME/anaconda2/envs/py27klayout/include/python2.7',
-                    'lib': '$HOME/anaconda2/envs/py27klayout/lib/libpython2.7.dylib'
-                  }
-
-# Using anaconda2 (https://www.anaconda.com/download/#macos) 5.0.1: *+*+*+ EXPERIMENTAL *+*+*+
-#   If the path to your `conda` command is '$HOME/anaconda2/bin/conda'
-#   and your Python environment was prepared by: $ conda create -n py36klayout python=3.6
-#
-#   No additional modules are installed in the experiment.
-# [Key Type Name] = 'Ana36'
-Anaconda36      = { 'exe': '$HOME/anaconda2/envs/py36klayout/bin/python3.6' ,
-                    'inc': '$HOME/anaconda2/envs/py36klayout/include/python3.6m',
-                    'lib': '$HOME/anaconda2/envs/py36klayout/lib/libpython3.6m.dylib'
-                  }
-
 # Python 3.6 from MacPorts (https://www.macports.org/) *+*+*+ EXPERIMENTAL *+*+*+
 # [Key Type Name] = 'MP36'
 Python36MacPorts= { 'exe': '/opt/local/Library/Frameworks/Python.framework/Versions/3.6/bin/python3.6m' ,
@@ -205,10 +182,17 @@ Python36MacPorts= { 'exe': '/opt/local/Library/Frameworks/Python.framework/Versi
 
 # Python 3.7 from Brew *+*+*+ EXPERIMENTAL *+*+*+
 # [Key Type Name] = 'pybrew'
-Python37Brew= { 'exe': '/usr/local/opt/python/libexec/bin/python' ,
-                'inc': '/usr/local/opt/python/Frameworks/Python.framework/Versions/3.7/Headers',
-                'lib': '/usr/local/opt/python/Frameworks/Python.framework/Versions/3.7/Python'
-              }
+Python37Brew    = { 'exe': '/usr/local/opt/python/libexec/bin/python' ,
+                    'inc': '/usr/local/opt/python/Frameworks/Python.framework/Versions/3.7/Headers',
+                    'lib': '/usr/local/opt/python/Frameworks/Python.framework/Versions/3.7/Python'
+                  }
+
+# Python 3.7 bundled with anaconda3 installed under $HOME/anaconda3/ *+*+*+ EXPERIMENTAL *+*+*+
+# [Key Type Name] = 'PythonAnaconda3'
+PythonAnaconda3 = { 'exe': '%s/anaconda3/bin/python' % MyHome,
+                    'inc': '%s/anaconda3/include/python3.7m' % MyHome,
+                    'lib': '%s/anaconda3/lib/libpython3.7m.dylib' % MyHome
+                  }
 
 # Consolidated dictionary kit for Python
 PythonDictionary= { 'nil'             : None,
@@ -217,10 +201,9 @@ PythonDictionary= { 'nil'             : None,
                     'PythonSierra'    : PythonSierra,
                     'PythonHighSierra': PythonHighSierra,
                     'PythonMojave'    : PythonMojave,
-                    'Anaconda27'      : Anaconda27,
-                    'Anaconda36'      : Anaconda36,
                     'Python36MacPorts': Python36MacPorts,
                     'Python37Brew'    : Python37Brew,
+                    'PythonAnaconda3' : PythonAnaconda3
                   }
 
 #-----------------------------------------------------
