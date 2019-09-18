@@ -1045,21 +1045,21 @@ template class DB_PUBLIC local_processor_result_computation_task<db::Edge, db::E
 //  LocalProcessor implementation
 
 template <class TS, class TI, class TR>
-local_processor<TS, TI, TR>::local_processor (db::Layout *layout, db::Cell *top)
+DB_PUBLIC local_processor<TS, TI, TR>::local_processor (db::Layout *layout, db::Cell *top)
   : mp_subject_layout (layout), mp_intruder_layout (layout), mp_subject_top (top), mp_intruder_top (top), m_nthreads (0), m_max_vertex_count (0), m_area_ratio (0.0), m_base_verbosity (30)
 {
   //  .. nothing yet ..
 }
 
 template <class TS, class TI, class TR>
-local_processor<TS, TI, TR>::local_processor (db::Layout *subject_layout, db::Cell *subject_top, const db::Layout *intruder_layout, const db::Cell *intruder_top)
+DB_PUBLIC local_processor<TS, TI, TR>::local_processor (db::Layout *subject_layout, db::Cell *subject_top, const db::Layout *intruder_layout, const db::Cell *intruder_top)
   : mp_subject_layout (subject_layout), mp_intruder_layout (intruder_layout), mp_subject_top (subject_top), mp_intruder_top (intruder_top), m_nthreads (0), m_max_vertex_count (0), m_area_ratio (0.0), m_base_verbosity (30)
 {
   //  .. nothing yet ..
 }
 
 template <class TS, class TI, class TR>
-std::string local_processor<TS, TI, TR>::description (const local_operation<TS, TI, TR> *op) const
+DB_PUBLIC std::string local_processor<TS, TI, TR>::description (const local_operation<TS, TI, TR> *op) const
 {
   if (op && m_description.empty ()) {
     return op->description ();
@@ -1069,7 +1069,7 @@ std::string local_processor<TS, TI, TR>::description (const local_operation<TS, 
 }
 
 template <class TS, class TI, class TR>
-void local_processor<TS, TI, TR>::run (local_operation<TS, TI, TR> *op, unsigned int subject_layer, unsigned int intruder_layer, unsigned int output_layer)
+DB_PUBLIC void local_processor<TS, TI, TR>::run (local_operation<TS, TI, TR> *op, unsigned int subject_layer, unsigned int intruder_layer, unsigned int output_layer)
 {
   tl::SelfTimer timer (tl::verbosity () > m_base_verbosity, tl::to_string (tr ("Executing ")) + description (op));
 
@@ -1079,7 +1079,7 @@ void local_processor<TS, TI, TR>::run (local_operation<TS, TI, TR> *op, unsigned
 }
 
 template <class TS, class TI, class TR>
-void local_processor<TS, TI, TR>::push_results (db::Cell *cell, unsigned int output_layer, const std::unordered_set<TR> &result) const
+DB_PUBLIC void local_processor<TS, TI, TR>::push_results (db::Cell *cell, unsigned int output_layer, const std::unordered_set<TR> &result) const
 {
   if (! result.empty ()) {
     tl::MutexLocker locker (&cell->layout ()->lock ());
@@ -1088,7 +1088,7 @@ void local_processor<TS, TI, TR>::push_results (db::Cell *cell, unsigned int out
 }
 
 template <class TS, class TI, class TR>
-void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS, TI, TR> &contexts, const local_operation<TS, TI, TR> *op, unsigned int subject_layer, unsigned int intruder_layer) const
+DB_PUBLIC void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS, TI, TR> &contexts, const local_operation<TS, TI, TR> *op, unsigned int subject_layer, unsigned int intruder_layer) const
 {
   try {
 
@@ -1119,7 +1119,7 @@ void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS,
 }
 
 template <class TS, class TI, class TR>
-void local_processor<TS, TI, TR>::issue_compute_contexts (local_processor_contexts<TS, TI, TR> &contexts,
+DB_PUBLIC void local_processor<TS, TI, TR>::issue_compute_contexts (local_processor_contexts<TS, TI, TR> &contexts,
                                                  db::local_processor_cell_context<TS, TI, TR> *parent_context,
                                                  db::Cell *subject_parent,
                                                  db::Cell *subject_cell,
@@ -1138,7 +1138,7 @@ void local_processor<TS, TI, TR>::issue_compute_contexts (local_processor_contex
 }
 
 template <class TS, class TI, class TR>
-void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS, TI, TR> &contexts,
+DB_PUBLIC void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS, TI, TR> &contexts,
                                                     db::local_processor_cell_context<TS, TI, TR> *parent_context,
                                                     db::Cell *subject_parent,
                                                     db::Cell *subject_cell,
@@ -1346,7 +1346,7 @@ void local_processor<TS, TI, TR>::compute_contexts (local_processor_contexts<TS,
 
 template <class TS, class TI, class TR>
 void
-local_processor<TS, TI, TR>::compute_results (local_processor_contexts<TS, TI, TR> &contexts, const local_operation<TS, TI, TR> *op, unsigned int output_layer) const
+DB_PUBLIC local_processor<TS, TI, TR>::compute_results (local_processor_contexts<TS, TI, TR> &contexts, const local_operation<TS, TI, TR> *op, unsigned int output_layer) const
 {
   tl::SelfTimer timer (tl::verbosity () > m_base_verbosity + 10, tl::to_string (tr ("Computing results for ")) + description (op));
 
@@ -1511,7 +1511,7 @@ struct scan_shape2shape_different_layers
 
 template <class TS, class TI, class TR>
 void
-local_processor<TS, TI, TR>::compute_local_cell (const db::local_processor_contexts<TS, TI, TR> &contexts, db::Cell *subject_cell, const db::Cell *intruder_cell, const local_operation<TS, TI, TR> *op, const typename local_processor_cell_contexts<TS, TI, TR>::context_key_type &intruders, std::unordered_set<TR> &result) const
+DB_PUBLIC local_processor<TS, TI, TR>::compute_local_cell (const db::local_processor_contexts<TS, TI, TR> &contexts, db::Cell *subject_cell, const db::Cell *intruder_cell, const local_operation<TS, TI, TR> *op, const typename local_processor_cell_contexts<TS, TI, TR>::context_key_type &intruders, std::unordered_set<TR> &result) const
 {
   const db::Shapes *subject_shapes = &subject_cell->shapes (contexts.subject_layer ());
 

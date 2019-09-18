@@ -985,7 +985,7 @@ template class DB_PUBLIC connected_clusters_iterator<db::Edge>;
 
 template <class T>
 const typename connected_clusters<T>::connections_type &
-connected_clusters<T>::connections_for_cluster (typename local_cluster<T>::id_type id) const
+DB_PUBLIC connected_clusters<T>::connections_for_cluster (typename local_cluster<T>::id_type id) const
 {
   typename std::map<typename local_cluster<T>::id_type, connections_type>::const_iterator c = m_connections.find (id);
   if (c == m_connections.end ()) {
@@ -998,7 +998,7 @@ connected_clusters<T>::connections_for_cluster (typename local_cluster<T>::id_ty
 
 template <class T>
 void
-connected_clusters<T>::add_connection (typename local_cluster<T>::id_type id, const ClusterInstance &inst)
+DB_PUBLIC connected_clusters<T>::add_connection (typename local_cluster<T>::id_type id, const ClusterInstance &inst)
 {
   m_connections [id].push_back (inst);
   m_rev_connections [inst] = id;
@@ -1006,7 +1006,7 @@ connected_clusters<T>::add_connection (typename local_cluster<T>::id_type id, co
 
 template <class T>
 void
-connected_clusters<T>::join_cluster_with (typename local_cluster<T>::id_type id, typename local_cluster<T>::id_type with_id)
+DB_PUBLIC connected_clusters<T>::join_cluster_with (typename local_cluster<T>::id_type id, typename local_cluster<T>::id_type with_id)
 {
   if (id == with_id) {
     return;
@@ -1029,7 +1029,7 @@ connected_clusters<T>::join_cluster_with (typename local_cluster<T>::id_type id,
 
 template <class T>
 typename local_cluster<T>::id_type
-connected_clusters<T>::find_cluster_with_connection (const ClusterInstance &inst) const
+DB_PUBLIC connected_clusters<T>::find_cluster_with_connection (const ClusterInstance &inst) const
 {
   typename std::map<ClusterInstance, typename local_cluster<T>::id_type>::const_iterator rc = m_rev_connections.find (inst);
   if (rc != m_rev_connections.end ()) {
@@ -2171,7 +2171,7 @@ template class DB_PUBLIC hier_clusters<db::Edge>;
 //  recursive_cluster_shape_iterator implementation
 
 template <class T>
-recursive_cluster_shape_iterator<T>::recursive_cluster_shape_iterator (const hier_clusters<T> &hc, unsigned int layer, db::cell_index_type ci, typename local_cluster<T>::id_type id)
+DB_PUBLIC recursive_cluster_shape_iterator<T>::recursive_cluster_shape_iterator (const hier_clusters<T> &hc, unsigned int layer, db::cell_index_type ci, typename local_cluster<T>::id_type id)
   : mp_hc (&hc), m_layer (layer), m_id (id)
 {
   if (id == 0) {
@@ -2186,7 +2186,8 @@ recursive_cluster_shape_iterator<T>::recursive_cluster_shape_iterator (const hie
 }
 
 template <class T>
-std::vector<ClusterInstance> recursive_cluster_shape_iterator<T>::inst_path () const
+std::vector<ClusterInstance>
+DB_PUBLIC recursive_cluster_shape_iterator<T>::inst_path () const
 {
   std::vector<db::ClusterInstance> p;
   if (!m_conn_iter_stack.empty ()) {
@@ -2199,7 +2200,8 @@ std::vector<ClusterInstance> recursive_cluster_shape_iterator<T>::inst_path () c
 }
 
 template <class T>
-recursive_cluster_shape_iterator<T> &recursive_cluster_shape_iterator<T>::operator++ ()
+recursive_cluster_shape_iterator<T> &
+DB_PUBLIC recursive_cluster_shape_iterator<T>::operator++ ()
 {
   ++m_shape_iter;
 
@@ -2211,7 +2213,8 @@ recursive_cluster_shape_iterator<T> &recursive_cluster_shape_iterator<T>::operat
 }
 
 template <class T>
-void recursive_cluster_shape_iterator<T>::skip_cell ()
+void 
+DB_PUBLIC recursive_cluster_shape_iterator<T>::skip_cell ()
 {
   m_shape_iter = typename db::local_cluster<T>::shape_iterator ();
 
@@ -2297,7 +2300,8 @@ recursive_cluster_iterator<T>::recursive_cluster_iterator (const hier_clusters<T
 }
 
 template <class T>
-std::vector<ClusterInstance> recursive_cluster_iterator<T>::inst_path () const
+std::vector<ClusterInstance>
+DB_PUBLIC recursive_cluster_iterator<T>::inst_path () const
 {
   std::vector<db::ClusterInstance> p;
   if (!m_conn_iter_stack.empty ()) {
@@ -2310,14 +2314,16 @@ std::vector<ClusterInstance> recursive_cluster_iterator<T>::inst_path () const
 }
 
 template <class T>
-recursive_cluster_iterator<T> &recursive_cluster_iterator<T>::operator++ ()
+recursive_cluster_iterator<T> &
+DB_PUBLIC recursive_cluster_iterator<T>::operator++ ()
 {
   next_conn ();
   return *this;
 }
 
 template <class T>
-void recursive_cluster_iterator<T>::next_conn ()
+void
+recursive_cluster_iterator<T>::next_conn ()
 {
   while (m_conn_iter_stack.back ().first == m_conn_iter_stack.back ().second) {
 
