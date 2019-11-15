@@ -105,6 +105,25 @@ Class<db::DeepShapeStore> decl_dbDeepShapeStore ("db", "DeepShapeStore",
     "Multiple layouts may be present if different sources of layouts have "
     "been used. Such DSS objects are not usable for network extraction."
   ) +
+  gsi::method ("keep_layouts=", &db::DeepShapeStore::set_keep_layouts,
+   "@brief Sets a flag making the DSS keep the layouts cached\n"
+   "\n"
+   "Setting this flag makes the DSS not release layouts when they are not used\n"
+   "anymore. Keeping layouts is useful when DeepRegions go out of scope and \n"
+   "new regions are going to be derived. Without \"keep_layouts\", layouts will\n"
+   "be released and the cached information will be discarded. When opening\n"
+   "a new layer, this information has to be regenerated. This may take time\n"
+   "and keeping the information will save this time.\n"
+   "\n"
+   "This method has been introduced in version 0.26.1.\n"
+  ) +
+  gsi::method ("keep_layouts?", &db::DeepShapeStore::keep_layouts,
+   "@brief Gets a flag indicating whether the DSS keeps the layouts\n"
+   "\n"
+   "See \\keep_layouts= for details about this attribute.\n"
+   "\n"
+   "This method has been introduced in version 0.26.1.\n"
+  ) +
   gsi::method ("threads=", &db::DeepShapeStore::set_threads, gsi::arg ("n"),
     "@brief Sets the number of threads to allocate for the hierarchical processor\n"
   ) +

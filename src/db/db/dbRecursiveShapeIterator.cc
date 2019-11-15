@@ -87,6 +87,43 @@ RecursiveShapeIterator &RecursiveShapeIterator::operator= (const RecursiveShapeI
   return *this;
 }
 
+static db::Box effective_bbox (const db::Box &region, const db::Cell &cell, unsigned int layer)
+{
+  db::Box bbox = cell.bbox (layer);
+  db::Box eff_bbox = bbox & region;
+  if (eff_bbox == bbox) {
+    return db::Box::world ();
+  } else {
+    return eff_bbox;
+  }
+}
+
+template <class LI>
+static db::Box effective_bbox (const db::Box &region, const db::Cell &cell, LI b, LI e)
+{
+  db::Box bbox;
+  for (LI l = b; l != e; ++l) {
+    bbox += cell.bbox (*l);
+  }
+  db::Box eff_bbox = bbox & region;
+  if (eff_bbox == bbox) {
+    return db::Box::world ();
+  } else {
+    return eff_bbox;
+  }
+}
+
+static db::Box effective_bbox (const db::Box &region, const db::Shapes &shapes)
+{
+  db::Box bbox = shapes.bbox ();
+  db::Box eff_bbox = bbox & region;
+  if (eff_bbox == bbox) {
+    return db::Box::world ();
+  } else {
+    return eff_bbox;
+  }
+}
+
 RecursiveShapeIterator::RecursiveShapeIterator ()
 {
   //  anything. Not necessary reasonable.
@@ -129,7 +166,7 @@ RecursiveShapeIterator::RecursiveShapeIterator (const shapes_type &shapes, const
   mp_top_cell = 0;
   m_overlapping = overlapping;
   init ();
-  init_region (region);
+  init_region (effective_bbox (region, shapes));
 }
 
 RecursiveShapeIterator::RecursiveShapeIterator (const shapes_type &shapes, const region_type &region, bool overlapping)
@@ -154,7 +191,7 @@ RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const
   mp_top_cell = &cell;
   m_overlapping = overlapping;
   init ();
-  init_region (region);
+  init_region (effective_bbox (region, cell, layer));
 }
 
 RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const cell_type &cell, unsigned int layer, const region_type &region, bool overlapping)
@@ -194,7 +231,7 @@ RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const
   mp_top_cell = &cell;
   m_overlapping = overlapping;
   init ();
-  init_region (region);
+  init_region (effective_bbox (region, cell, layers.begin (), layers.end ()));
 }
 
 RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const cell_type &cell, const std::vector<unsigned int> &layers, const region_type &region, bool overlapping)
@@ -236,7 +273,7 @@ RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const
   mp_top_cell = &cell;
   m_overlapping = overlapping;
   init ();
-  init_region (region);
+  init_region (effective_bbox (region, cell, layers.begin (), layers.end ()));
 }
 
 RecursiveShapeIterator::RecursiveShapeIterator (const layout_type &layout, const cell_type &cell, const std::set<unsigned int> &layers, const region_type &region, bool overlapping)

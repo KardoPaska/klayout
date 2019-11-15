@@ -315,6 +315,26 @@ public:
   bool is_singular () const;
 
   /**
+   *  @brief Sets a flag making the DSS keep the layouts cached
+   *
+   *  Setting this flag makes the DSS not release layouts when they are not used
+   *  anymore. Keeping layouts is useful when DeepRegions go out of scope and 
+   *  new regions are going to be derived. Without "keep_layouts", layouts will
+   *  be released and the cached information will be discarded. When opening
+   *  a new layer, this information has to be regenerated. This may take time
+   *  and keeping the information will save this time.
+   */
+  void set_keep_layouts (bool f);
+
+  /**
+   *  @brief Gets a flag indicating whether the DSS keeps the layouts
+   */
+  bool keep_layouts () const
+  {
+    return m_keep_layouts;
+  }
+
+  /**
    *  @brief Creates a new layer from a flat region (or the region is made flat)
    *
    *  This method is intended for use with singular-created DSS objects (see
@@ -688,6 +708,7 @@ private:
   DeepShapeStore &operator= (const DeepShapeStore &);
 
   std::vector<LayoutHolder *> m_layouts;
+  bool m_keep_layouts;
   std::map<size_t, std::pair<unsigned int, unsigned int> > m_layers_for_flat;
   std::map<std::pair<unsigned int, unsigned int>, size_t> m_flat_region_id;
   layout_map_type m_layout_map;

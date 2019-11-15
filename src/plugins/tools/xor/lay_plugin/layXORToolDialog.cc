@@ -740,6 +740,7 @@ void
 XORWorker::do_perform_deep (const XORTask *xor_task)
 {
   db::DeepShapeStore dss;
+  dss.set_keep_layouts (true);
   db::Region rr;
 
   unsigned int tol_index = 0;

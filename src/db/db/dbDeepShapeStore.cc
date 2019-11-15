@@ -360,11 +360,13 @@ static size_t s_instance_count = 0;
 
 DeepShapeStore::DeepShapeStore ()
 {
+  m_keep_layouts = false;
   ++s_instance_count;
 }
 
 DeepShapeStore::DeepShapeStore (const std::string &topcell_name, double dbu)
 {
+  m_keep_layouts = false;
   ++s_instance_count;
 
   m_layouts.push_back (new LayoutHolder (db::ICplxTrans ()));
@@ -380,6 +382,12 @@ DeepShapeStore::~DeepShapeStore ()
     delete *h;
   }
   m_layouts.clear ();
+}
+
+void
+DeepShapeStore::set_keep_layouts (bool f)
+{
+  m_keep_layouts = f;
 }
 
 DeepLayer DeepShapeStore::create_from_flat (const db::Region &region, bool for_netlist, double max_area_ratio, size_t max_vertex_count, const db::ICplxTrans &trans)
@@ -642,7 +650,7 @@ void DeepShapeStore::remove_ref (unsigned int layout, unsigned int layer)
 
   }
 
-  if ((m_layouts[layout]->refs -= 1) <= 0) {
+  if ((m_layouts[layout]->refs -= 1) <= 0 && ! m_keep_layouts) {
     delete m_layouts[layout];
     m_layouts[layout] = 0;
     clear_breakout_cells (layout);
