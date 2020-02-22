@@ -124,7 +124,7 @@ public:
    *  @brief Creates an empty device parameter definition
    */
   DeviceParameterDefinition ()
-    : m_name (), m_description (), m_default_value (0.0), m_id (0), m_is_primary (true), m_si_scaling (1.0)
+    : m_name (), m_description (), m_default_value (0.0), m_id (0), m_is_primary (true), m_si_scaling (1.0), m_m_scaling (0.0)
   {
     //  .. nothing yet ..
   }
@@ -132,8 +132,8 @@ public:
   /**
    *  @brief Creates a device parameter definition with the given name and description
    */
-  DeviceParameterDefinition (const std::string &name, const std::string &description, double default_value = 0.0, bool is_primary = true, double si_scaling = 1.0)
-    : m_name (name), m_description (description), m_default_value (default_value), m_id (0), m_is_primary (is_primary), m_si_scaling (si_scaling)
+  DeviceParameterDefinition (const std::string &name, const std::string &description, double default_value = 0.0, bool is_primary = true, double si_scaling = 1.0, double m_scaling = 0.0)
+    : m_name (name), m_description (description), m_default_value (default_value), m_id (0), m_is_primary (is_primary), m_si_scaling (si_scaling), m_m_scaling (m_scaling)
   {
     //  .. nothing yet ..
   }
@@ -190,6 +190,16 @@ public:
   }
 
   /**
+   *  @brief Gets the multiplier (M) scaling exponent
+   *
+   *  With a value of 0, no scaling is applied, with 1 linear scaling and with 2 scaling by M^2
+   */
+  double m_scaling () const
+  {
+    return m_m_scaling;
+  }
+
+  /**
    *  @brief Sets the parameter description
    */
   void set_default_value (double d)
@@ -232,6 +242,7 @@ private:
   size_t m_id;
   bool m_is_primary;
   double m_si_scaling;
+  double m_m_scaling;
 
   void set_id (size_t id)
   {

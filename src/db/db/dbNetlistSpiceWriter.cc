@@ -193,23 +193,42 @@ std::string NetlistSpiceWriterDelegate::format_terminals (const db::Device &dev,
   return os.str ();
 }
 
-std::string NetlistSpiceWriterDelegate::format_params (const db::Device &dev, size_t without_id) const
+std::string NetlistSpiceWriterDelegate::format_params (const db::Device &dev) const
 {
   std::ostringstream os;
 
   const std::vector<db::DeviceParameterDefinition> &pd = dev.device_class ()->parameter_definitions ();
   for (std::vector<db::DeviceParameterDefinition>::const_iterator i = pd.begin (); i != pd.end (); ++i) {
-    if (i->id () != without_id) {
-      double sis = i->si_scaling ();
-      os << " " << i->name () << "=";
-      //  for compatibility
-      if (fabs (sis * 1e6 - 1.0) < 1e-10) {
-        os << tl::to_string (dev.parameter_value (i->id ())) << "U";
-      } else if (fabs (sis * 1e12 - 1.0) < 1e-10) {
-        os << tl::to_string (dev.parameter_value (i->id ())) << "P";
-      } else {
-        os << tl::to_string (dev.parameter_value (i->id ()) * sis);
-      }
+    double sis = i->si_scaling ();
+    os << " " << i->name () << "=";
+    //  for compatibility
+    if (fabs (sis * 1e6 - 1.0) < 1e-10) {
+      os << tl::to_string (dev.parameter_value (i->id ())) << "U";
+    } else if (fabs (sis * 1e12 - 1.0) < 1e-10) {
+      os << tl::to_string (dev.parameter_value (i->id ())) << "P";
+    } else {
+      os << tl::to_string (dev.parameter_value (i->id ()) * sis);
+    }
+  }
+
+  return os.str ();
+}
+
+std::string NetlistSpiceWriterDelegate::format_transistor_params (const db::Device &dev) const
+{
+  std::ostringstream os;
+
+  const std::vector<db::DeviceParameterDefinition> &pd = dev.device_class ()->parameter_definitions ();
+  for (std::vector<db::DeviceParameterDefinition>::const_iterator i = pd.begin (); i != pd.end (); ++i) {
+    double sis = i->si_scaling ();
+    os << " " << i->name () << "=";
+    //  for compatibility
+    if (fabs (sis * 1e6 - 1.0) < 1e-10) {
+      os << tl::to_string (dev.parameter_value (i->id ())) << "U";
+    } else if (fabs (sis * 1e12 - 1.0) < 1e-10) {
+      os << tl::to_string (dev.parameter_value (i->id ())) << "P";
+    } else {
+      os << tl::to_string (dev.parameter_value (i->id ()) * sis);
     }
   }
 

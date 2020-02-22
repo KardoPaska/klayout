@@ -62,8 +62,6 @@ public:
   void emit_line (const std::string &line) const;
   void emit_comment (const std::string &comment) const;
   std::string format_name (const std::string &s) const;
-  std::string format_terminals (const db::Device &dev, size_t max_terminals = std::numeric_limits<size_t>::max ()) const;
-  std::string format_params (const db::Device &dev, size_t without_id = std::numeric_limits<size_t>::max ()) const;
 
 private:
   friend class NetlistSpiceWriter;
@@ -71,6 +69,9 @@ private:
   NetlistSpiceWriter *mp_writer;
 
   void attach_writer (NetlistSpiceWriter *writer);
+  std::string format_terminals (const db::Device &dev, size_t max_terminals = std::numeric_limits<size_t>::max ()) const;
+  std::string format_params (const db::Device &dev) const;
+  std::string format_transistor_params (const db::Device &dev) const;
 };
 
 /**

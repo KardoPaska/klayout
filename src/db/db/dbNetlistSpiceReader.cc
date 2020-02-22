@@ -99,6 +99,8 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
     error (tl::sprintf (tl::to_string (tr ("Invalid multiplier value (M=%.12g) - must not be zero or negative")), mult));
   }
 
+  size_t defp = std::numeric_limits<size_t>::max ();
+
   std::string cn = model;
   db::DeviceClass *cls = circuit->netlist ()->device_class_by_name (cn);
 
@@ -113,8 +115,7 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
     }
     cls = make_device_class<db::DeviceClassResistor> (circuit, cn);
 
-    //  Apply multiplier
-    value /= mult;
+    defp = db::DeviceClassResistor::param_id_R;
 
   } else if (element == "L") {
 
@@ -123,8 +124,7 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
     }
     cls = make_device_class<db::DeviceClassInductor> (circuit, cn);
 
-    //  Apply multiplier
-    value /= mult;
+    defp = db::DeviceClassInductor::param_id_L;
 
   } else if (element == "C") {
 
@@ -133,8 +133,7 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
     }
     cls = make_device_class<db::DeviceClassCapacitor> (circuit, cn);
 
-    //  Apply multiplier
-    value *= mult;
+    defp = db::DeviceClassCapacitor::param_id_C;
 
   } else if (element == "D") {
 
@@ -142,13 +141,6 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
       cn = "DIODE";
     }
     cls = make_device_class<db::DeviceClassDiode> (circuit, cn);
-
-    //  Apply multiplier to "A"
-    std::map<std::string, double>::iterator p;
-    p = params.find ("A");
-    if (p != params.end ()) {
-      p->second *= mult;
-    }
 
   } else if (element == "Q") {
 
@@ -166,13 +158,6 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
       error (tl::to_string (tr ("'Q' element needs to have 3 or 4 terminals")));
     }
 
-    //  Apply multiplier to "AE"
-    std::map<std::string, double>::iterator p;
-    p = params.find ("AE");
-    if (p != params.end ()) {
-      p->second *= mult;
-    }
-
   } else if (element == "M") {
 
     if (nets.size () == 4) {
@@ -181,16 +166,10 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
       }
       cls = make_device_class<db::DeviceClassMOS4Transistor> (circuit, cn);
 
-      //  Apply multiplier to "W"
-      std::map<std::string, double>::iterator p;
-      p = params.find ("W");
-      if (p != params.end ()) {
-        p->second *= mult;
-      }
-
     } else {
       error (tl::to_string (tr ("'M' element needs to have 4 terminals")));
     }
+
   } else {
     error (tl::sprintf (tl::to_string (tr ("Not a known element type: '%s'")), element));
   }
@@ -207,22 +186,13 @@ bool NetlistSpiceReaderDelegate::element (db::Circuit *circuit, const std::strin
     device->connect_terminal (t->id (), nets [t - td.begin ()]);
   }
 
-  size_t defp = std::numeric_limits<size_t>::max ();
-  if (dynamic_cast<db::DeviceClassCapacitor *> (cls)) {
-    defp = db::DeviceClassCapacitor::param_id_C;
-  } else if (dynamic_cast<db::DeviceClassResistor *> (cls)) {
-    defp = db::DeviceClassResistor::param_id_R;
-  } else if (dynamic_cast<db::DeviceClassInductor *> (cls)) {
-    defp = db::DeviceClassInductor::param_id_L;
-  }
-
   const std::vector<db::DeviceParameterDefinition> &pd = cls->parameter_definitions ();
   for (std::vector<db::DeviceParameterDefinition>::const_iterator i = pd.begin (); i != pd.end (); ++i) {
     std::map<std::string, double>::const_iterator v = params.find (i->name ());
     if (v != params.end ()) {
-      device->set_parameter_value (i->id (), v->second / i->si_scaling ());
+      device->set_parameter_value (i->id (), v->second / i->si_scaling () * pow (mult, i->m_scaling ()));
     } else if (i->id () == defp) {
-      device->set_parameter_value (i->id (), value / i->si_scaling ());
+      device->set_parameter_value (i->id (), value / i->si_scaling () * pow (mult, i->m_scaling ()));
     }
   }
 

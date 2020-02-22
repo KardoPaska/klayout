@@ -664,19 +664,21 @@ Class<db::DeviceTerminalDefinition> decl_dbDeviceTerminalDefinition ("db", "Devi
   "This class has been added in version 0.26."
 );
 
-static db::DeviceParameterDefinition *new_parameter_definition (const std::string &name, const std::string &description, double default_value, bool is_primary, double si_scaling)
+static db::DeviceParameterDefinition *new_parameter_definition (const std::string &name, const std::string &description, double default_value, bool is_primary, double si_scaling, double m_scaling)
 {
-  return new db::DeviceParameterDefinition (name, description, default_value, is_primary, si_scaling);
+  return new db::DeviceParameterDefinition (name, description, default_value, is_primary, si_scaling, m_scaling);
 }
 
 Class<db::DeviceParameterDefinition> decl_dbDeviceParameterDefinition ("db", "DeviceParameterDefinition",
-  gsi::constructor ("new", &gsi::new_parameter_definition, gsi::arg ("name"), gsi::arg ("description", std::string ()), gsi::arg ("default_value", 0.0), gsi::arg ("is_primary", true), gsi::arg ("si_scaling", 1.0),
+  gsi::constructor ("new", &gsi::new_parameter_definition, gsi::arg ("name"), gsi::arg ("description", std::string ()), gsi::arg ("default_value", 0.0), gsi::arg ("is_primary", true), gsi::arg ("si_scaling", 1.0), gsi::arg ("m_scaling", 0.0),
     "@brief Creates a new parameter definition."
     "@param name The name of the parameter\n"
     "@param description The human-readable description\n"
     "@param default_value The initial value\n"
     "@param is_primary True, if the parameter is a primary parameter (see \\is_primary=)\n"
     "@param si_scaling The scaling factor to SI units\n"
+    "@param m_scaling Specifies how the parameter scales with a multiplier 'M' (an exponent: 0 = no scaling, 1 = times M, 2 = times M^2 ...)\n"
+    "The m_scaling argument has been introduced in version 0.27.4.\n"
   ) +
   gsi::method ("name", &db::DeviceParameterDefinition::name,
     "@brief Gets the name of the parameter."
