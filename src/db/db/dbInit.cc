@@ -126,7 +126,7 @@ void init (const std::vector<std::string> &_paths)
     std::vector<std::string> ee = tl::dir_entries (pp, true, false);
 
     tl::GlobPattern pattern;
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
     pattern.set_case_sensitive (false);
     pattern = std::string ("*.dll");
 #elif defined(__APPLE__)

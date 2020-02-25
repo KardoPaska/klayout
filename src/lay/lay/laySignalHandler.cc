@@ -28,7 +28,7 @@
 #include "tlString.h"
 #include "tlLog.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #  include <windows.h>
 #  include <DbgHelp.h>
 #  include <Psapi.h>
@@ -41,8 +41,8 @@
 #  endif
 #else
 #  include <dlfcn.h>
-#  include <execinfo.h>
 #  include <unistd.h>
+#  include <execinfo.h>
 #endif
 
 #include <signal.h>
@@ -60,7 +60,7 @@ void enable_signal_handler_gui (bool en)
   s_sh_has_gui = en;
 }
 
-#if defined(WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
 
 static QString
 addr2symname (DWORD64 addr)
@@ -179,7 +179,7 @@ LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS pExceptionInfo)
           QString::fromUtf8 (" (") +
           QString::fromUtf8 (lay::Version::subversion ()) +
           QString::fromUtf8 (")");
-#if defined(_WIN64)
+#if defined(_WIN64) || defined(__CYGWIN64__)
   text += QString::fromUtf8 (" AMD64");
 #else
   text += QString::fromUtf8 (" x86");
@@ -193,7 +193,7 @@ LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS pExceptionInfo)
   STACKFRAME64 stack_frame;
   memset(&stack_frame, 0, sizeof(stack_frame));
 
-#if defined(_WIN64)
+#if defined(_WIN64) || defined(__CYGWIN64__)
   int machine_type = IMAGE_FILE_MACHINE_AMD64;
   stack_frame.AddrPC.Offset = context_record.Rip;
   stack_frame.AddrFrame.Offset = context_record.Rbp;
