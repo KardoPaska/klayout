@@ -429,6 +429,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
       *this << 0 << endl << "POLYLINE" << endl;
       *this << 8 << endl; emit_layer (m_layer);
       if (zinfo) {
+        *this << 30 << endl << zinfo->z () * sf << endl;
         *this << 39 << endl << zinfo->dz () * sf << endl;
       }
       *this << 70 << endl << 1 << endl;
@@ -441,9 +442,6 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
         *this << 8 << endl; emit_layer (m_layer);  //  required by TrueView
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
-        if (zinfo) {
-          *this << 30 << endl << zinfo->z () * sf << endl;
-        }
       }
 
       *this << 0 << endl << "SEQEND" << endl;
@@ -457,6 +455,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
       *this << 0 << endl << "LWPOLYLINE" << endl;
       *this << 8 << endl; emit_layer (m_layer);
       if (zinfo) {
+        *this << 38 << endl << zinfo->z () * sf << endl;
         *this << 39 << endl << zinfo->dz () * sf << endl;
       }
       *this << 90 << endl << polygon.contour (0).size () << endl;
@@ -466,9 +465,6 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
       for (db::Polygon::polygon_contour_iterator p = polygon.contour (c).begin (); p != polygon.contour (c).end (); ++p) {
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
-        if (zinfo) {
-          *this << 30 << endl << zinfo->z () * sf << endl;
-        }
       }
 
     }
@@ -696,6 +692,7 @@ DXFWriter::write_paths (const db::Layout &layout, const db::Cell &cell, unsigned
         *this << 0 << endl << "LWPOLYLINE" << endl;
         *this << 8 << endl; emit_layer (m_layer);
         if (zi) {
+          *this << 38 << endl << zi->z () * sf << endl;
           *this << 39 << endl << zi->dz () * sf << endl;
         }
         size_t n = 0;
@@ -710,6 +707,7 @@ DXFWriter::write_paths (const db::Layout &layout, const db::Cell &cell, unsigned
         *this << 0 << endl << "POLYLINE" << endl;
         *this << 8 << endl; emit_layer (m_layer);
         if (zi) {
+          *this << 30 << endl << zi->z () * sf << endl;
           *this << 39 << endl << zi->dz () * sf << endl;
         }
         *this << 70 << endl << 0 << endl;
@@ -764,9 +762,6 @@ DXFWriter::write_paths (const db::Layout &layout, const db::Cell &cell, unsigned
         }
         *this << 10 << endl << pp.x () << endl;
         *this << 20 << endl << pp.y () << endl;
-        if (zi) {
-          *this << 30 << endl << zi->z () * sf << endl;
-        }
 
         plast = pp;
         ++n;
