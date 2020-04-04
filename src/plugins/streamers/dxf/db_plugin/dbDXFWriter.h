@@ -61,11 +61,26 @@ public:
 private:
   struct endl_tag { };
 
+  struct ZInfo {
+
+    ZInfo () : zstart (0), zstop (0) {}
+    ZInfo (db::Coord _zstart, db::Coord _zstop) : zstart (_zstart), zstop (_zstop) {}
+
+    db::Coord zstart, zstop;
+
+    db::Coord z() const { return zstart < zstop ? zstart : zstop; }
+    db::Coord dz() const { return zstart < zstop ? zstop - zstart : zstart - zstop; }
+
+  };
+
   tl::OutputStream *mp_stream;
   db::DXFWriterOptions m_options;
   tl::AbsoluteProgress m_progress;
   endl_tag endl;
   db::LayerProperties m_layer;
+  std::map<db::properties_id_type, const ZInfo *> m_zinfo_from_prop_id;
+  std::list<ZInfo> m_zinfo;
+  std::pair<bool, db::property_names_id_type> m_dxf_zstart_id, m_dxf_zstop_id;
   
   DXFWriter &operator<<(const char *s);
   DXFWriter &operator<<(const std::string &s);
@@ -78,11 +93,12 @@ private:
 
   void write_texts (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_polygons (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
-  void write_polygon (const db::Polygon &polygon, double tl_scale);
+  void write_polygon (const db::Polygon &polygon, double tl_scale, const ZInfo *zinfo);
   void write_boxes (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_paths (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_edges (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write (const db::Layout &layout, const db::Cell &cref, const std::set <db::cell_index_type> &cell_set, const std::vector <std::pair <unsigned int, db::LayerProperties> > &layers, double sf);
+  const ZInfo *zinfo (const db::Layout &layout, properties_id_type prop_id);
 
   void emit_layer(const db::LayerProperties &lp);
 };

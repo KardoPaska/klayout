@@ -72,6 +72,9 @@ DXFWriter::operator<<(endl_tag)
 void
 DXFWriter::write (const db::Layout &layout, const db::Cell &cref, const std::set <db::cell_index_type> &cell_set, const std::vector <std::pair <unsigned int, db::LayerProperties> > &layers, double sf)
 {
+  m_dxf_zstart_id = layout.properties_repository ().get_id_of_name (tl::Variant ("dxf_zstart"));
+  m_dxf_zstop_id = layout.properties_repository ().get_id_of_name (tl::Variant ("dxf_zstop"));
+
   //  instances
   for (db::Cell::const_iterator inst = cref.begin (); ! inst.at_end (); ++inst) {
 
@@ -263,6 +266,38 @@ DXFWriter::emit_layer(const db::LayerProperties &lp)
   }
 }
 
+const DXFWriter::ZInfo *
+DXFWriter::zinfo (const db::Layout &layout, db::properties_id_type prop_id)
+{
+  if (! prop_id || ! m_dxf_zstart_id.first || ! m_dxf_zstop_id.first) {
+    return 0;
+  }
+
+  std::map<db::properties_id_type, const ZInfo *>::const_iterator p = m_zinfo_from_prop_id.find (prop_id);
+  if (p != m_zinfo_from_prop_id.end ()) {
+    return p->second;
+  }
+
+  const db::PropertiesRepository::properties_set &ps = layout.properties_repository ().properties (prop_id);
+
+  db::PropertiesRepository::properties_set::const_iterator i, j;
+  i = ps.find (m_dxf_zstart_id.second);
+  j = ps.find (m_dxf_zstop_id.second);
+  if (i != ps.end () && i->first == m_dxf_zstart_id.second && j != ps.end () && j->first == m_dxf_zstop_id.second) {
+
+    db::Coord zstart = i->second.to<db::Coord> ();
+    db::Coord zstop = j->second.to<db::Coord> ();
+
+    m_zinfo.push_back (ZInfo (zstart, zstop));
+    m_zinfo_from_prop_id.insert (std::make_pair (prop_id, &m_zinfo.back ()));
+
+    return &m_zinfo.back ();
+
+  } else {
+    return 0;
+  }
+}
+
 void 
 DXFWriter::write_texts (const db::Layout & /*layout*/, const db::Cell &cell, unsigned int layer, double sf)
 {
@@ -368,7 +403,7 @@ DXFWriter::write_texts (const db::Layout & /*layout*/, const db::Cell &cell, uns
 }
 
 void 
-DXFWriter::write_polygons (const db::Layout & /*layout*/, const db::Cell &cell, unsigned int layer, double sf)
+DXFWriter::write_polygons (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double sf)
 {
   db::ShapeIterator shape (cell.shapes (layer).begin (db::ShapeIterator::Polygons));
   while (! shape.at_end ()) {
@@ -377,7 +412,7 @@ DXFWriter::write_polygons (const db::Layout & /*layout*/, const db::Cell &cell, 
 
     db::Polygon poly;
     shape->polygon (poly);
-    write_polygon (poly, sf);
+    write_polygon (poly, sf, zinfo (layout, shape->prop_id ()));
 
     ++shape;
 
@@ -385,7 +420,7 @@ DXFWriter::write_polygons (const db::Layout & /*layout*/, const db::Cell &cell, 
 }
 
 void 
-DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
+DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zinfo)
 {
   if (m_options.polygon_mode == 0) {
 
@@ -393,6 +428,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
 
       *this << 0 << endl << "POLYLINE" << endl;
       *this << 8 << endl; emit_layer (m_layer);
+      if (zinfo) {
+        *this << 39 << endl << zinfo->dz () * sf << endl;
+      }
       *this << 70 << endl << 1 << endl;
       *this << 40 << endl << 0.0 << endl;
       *this << 41 << endl << 0.0 << endl;
@@ -403,6 +441,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
         *this << 8 << endl; emit_layer (m_layer);  //  required by TrueView
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
       }
 
       *this << 0 << endl << "SEQEND" << endl;
@@ -415,6 +456,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
 
       *this << 0 << endl << "LWPOLYLINE" << endl;
       *this << 8 << endl; emit_layer (m_layer);
+      if (zinfo) {
+        *this << 39 << endl << zinfo->dz () * sf << endl;
+      }
       *this << 90 << endl << polygon.contour (0).size () << endl;
       *this << 70 << endl << 1 << endl;
       *this << 43 << endl << 0.0 << endl;
@@ -422,6 +466,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
       for (db::Polygon::polygon_contour_iterator p = polygon.contour (c).begin (); p != polygon.contour (c).end (); ++p) {
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
       }
 
     }
@@ -442,7 +489,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
       ep.process (out, op);
 
       for (std::vector<db::Polygon>::const_iterator p = polygons.begin (); p != polygons.end (); ++p) {
-        write_polygon (*p, sf);
+        write_polygon (*p, sf, zinfo);
       }
 
     } else if (polygon.vertices () > 4) {
@@ -450,13 +497,16 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
       std::vector <db::Polygon> polygons;
       db::split_polygon (polygon, polygons);
       for (std::vector<db::Polygon>::const_iterator p = polygons.begin (); p != polygons.end (); ++p) {
-        write_polygon (*p, sf);
+        write_polygon (*p, sf, zinfo);
       }
 
     } else if (polygon.vertices () >= 3) {
 
       *this << 0 << endl << "SOLID" << endl;
       *this << 8 << endl; emit_layer (m_layer);
+      if (zinfo) {
+        *this << 39 << endl << zinfo->dz () * sf << endl;
+      }
 
       double x [4], y [4];
       unsigned int i = 0;
@@ -469,21 +519,45 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
       if (i == 4) {
         *this << 10 << endl << x[0] << endl;
         *this << 20 << endl << y[0] << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
         *this << 11 << endl << x[1] << endl;
         *this << 21 << endl << y[1] << endl;
+        if (zinfo) {
+          *this << 31 << endl << zinfo->z () * sf << endl;
+        }
         *this << 12 << endl << x[3] << endl;
         *this << 22 << endl << y[3] << endl;
+        if (zinfo) {
+          *this << 32 << endl << zinfo->z () * sf << endl;
+        }
         *this << 13 << endl << x[2] << endl;
         *this << 23 << endl << y[2] << endl;
+        if (zinfo) {
+          *this << 33 << endl << zinfo->z () * sf << endl;
+        }
       } else {
         *this << 10 << endl << x[0] << endl;
         *this << 20 << endl << y[0] << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
         *this << 11 << endl << x[1] << endl;
         *this << 21 << endl << y[1] << endl;
+        if (zinfo) {
+          *this << 31 << endl << zinfo->z () * sf << endl;
+        }
         *this << 12 << endl << x[2] << endl;
         *this << 22 << endl << y[2] << endl;
+        if (zinfo) {
+          *this << 32 << endl << zinfo->z () * sf << endl;
+        }
         *this << 13 << endl << x[2] << endl;
         *this << 23 << endl << y[2] << endl;
+        if (zinfo) {
+          *this << 33 << endl << zinfo->z () * sf << endl;
+        }
       }
 
     }
@@ -492,6 +566,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
 
     *this << 0 << endl << "HATCH" << endl;
     *this << 8 << endl; emit_layer (m_layer);
+    if (zinfo) {
+      *this << 39 << endl << zinfo->dz () * sf << endl;
+    }
     *this << 70 << endl << 1 << endl; // solid fill
 
     *this << 91 << endl << polygon.holes () + 1 << endl;
@@ -504,6 +581,9 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
       for (db::Polygon::polygon_contour_iterator p = polygon.contour (c).begin (); p != polygon.contour (c).end (); ++p) {
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
       }
     }
 
@@ -528,11 +608,20 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
 
         *this << 0 << endl << "LINE" << endl;
         *this << 8 << endl; emit_layer (m_layer);
+        if (zinfo) {
+          *this << 39 << endl << zinfo->dz () * sf << endl;
+        }
         *this << 66 << endl << 1 << endl;  //  required by TrueView
         *this << 10 << endl << (*p).x () * sf << endl;
         *this << 20 << endl << (*p).y () * sf << endl;
+        if (zinfo) {
+          *this << 30 << endl << zinfo->z () * sf << endl;
+        }
         *this << 11 << endl << (*q).x () * sf << endl;
         *this << 21 << endl << (*q).y () * sf << endl;
+        if (zinfo) {
+          *this << 31 << endl << zinfo->z () * sf << endl;
+        }
       }
     }
   }
@@ -540,7 +629,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf)
 }
 
 void 
-DXFWriter::write_boxes (const db::Layout & /*layout*/, const db::Cell &cell, unsigned int layer, double sf)
+DXFWriter::write_boxes (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double sf)
 {
   db::ShapeIterator shape (cell.shapes (layer).begin (db::ShapeIterator::Boxes));
   while (! shape.at_end ()) {
@@ -548,7 +637,7 @@ DXFWriter::write_boxes (const db::Layout & /*layout*/, const db::Cell &cell, uns
     //  TODO: write as SOLID's?
     m_progress.set (mp_stream->pos ());
     db::Polygon p (shape->bbox ());
-    write_polygon (p, sf);
+    write_polygon (p, sf, zinfo (layout, shape->prop_id ()));
 
     ++shape;
 
@@ -556,10 +645,12 @@ DXFWriter::write_boxes (const db::Layout & /*layout*/, const db::Cell &cell, uns
 }
 
 void 
-DXFWriter::write_paths (const db::Layout & /*layout*/, const db::Cell &cell, unsigned int layer, double sf)
+DXFWriter::write_paths (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double sf)
 {
   db::ShapeIterator shape (cell.shapes (layer).begin (db::ShapeIterator::Paths));
   while (! shape.at_end ()) {
+
+    const ZInfo *zi = zinfo (layout, shape->prop_id ());
 
     m_progress.set (mp_stream->pos ());
 
@@ -568,14 +659,27 @@ DXFWriter::write_paths (const db::Layout & /*layout*/, const db::Cell &cell, uns
       ++npts;
     }
 
-    if (shape->round_path () && npts == 1) {
+    if (m_options.path_mode == 2) {
+
+      //  convert paths to polygons - polygon mode applies
+      db::Polygon poly;
+      shape->polygon (poly);
+      write_polygon (poly, sf, zi);
+
+    } else if (shape->round_path () && npts == 1) {
 
       db::Point pp (*shape->begin_point ());
 
       *this << 0 << endl << "CIRCLE" << endl;
       *this << 8 << endl; emit_layer (m_layer);
+      if (zi) {
+        *this << 39 << endl << zi->dz () * sf << endl;
+      }
       *this << 10 << endl << pp.x () * sf << endl;
       *this << 20 << endl << pp.y () * sf << endl;
+      if (zi) {
+        *this << 30 << endl << zi->z () * sf << endl;
+      }
       *this << 40 << endl << shape->path_width () * sf * 0.5 << endl;
 
     } else if (shape->round_path ()) {
@@ -583,16 +687,37 @@ DXFWriter::write_paths (const db::Layout & /*layout*/, const db::Cell &cell, uns
       //  emit round paths as polygons
       db::Polygon poly;
       shape->polygon (poly);
-      write_polygon (poly, sf);
+      write_polygon (poly, sf, zi);
 
     } else {
 
-      *this << 0 << endl << "POLYLINE" << endl;
-      *this << 8 << endl; emit_layer (m_layer);
-      *this << 70 << endl << 0 << endl;
-      *this << 40 << endl << shape->path_width () * sf << endl;
-      *this << 41 << endl << shape->path_width () * sf << endl;
-      *this << 66 << endl << 1 << endl;  //  required by TrueView
+      if (m_options.path_mode == 1) {
+
+        *this << 0 << endl << "LWPOLYLINE" << endl;
+        *this << 8 << endl; emit_layer (m_layer);
+        if (zi) {
+          *this << 39 << endl << zi->dz () * sf << endl;
+        }
+        size_t n = 0;
+        for (db::Shape::point_iterator p = shape->begin_point (); p != shape->end_point (); ++p, ++n)
+          ;
+        *this << 90 << endl << n << endl;
+        *this << 70 << endl << 0 << endl;
+        *this << 43 << endl << shape->path_width () * sf << endl;
+
+      } else {
+
+        *this << 0 << endl << "POLYLINE" << endl;
+        *this << 8 << endl; emit_layer (m_layer);
+        if (zi) {
+          *this << 39 << endl << zi->dz () * sf << endl;
+        }
+        *this << 70 << endl << 0 << endl;
+        *this << 40 << endl << shape->path_width () * sf << endl;
+        *this << 41 << endl << shape->path_width () * sf << endl;
+        *this << 66 << endl << 1 << endl;  //  required by TrueView
+
+      }
 
       size_t n = 0;
       std::pair<db::Coord, db::Coord> ext = shape->path_extensions ();
@@ -633,10 +758,15 @@ DXFWriter::write_paths (const db::Layout & /*layout*/, const db::Cell &cell, uns
 
         }
 
-        *this << 0 << endl << "VERTEX" << endl;
-        *this << 8 << endl; emit_layer (m_layer);  //  required by TrueView
+        if (m_options.path_mode != 1) {
+          *this << 0 << endl << "VERTEX" << endl;
+          *this << 8 << endl; emit_layer (m_layer);  //  required by TrueView
+        }
         *this << 10 << endl << pp.x () << endl;
         *this << 20 << endl << pp.y () << endl;
+        if (zi) {
+          *this << 30 << endl << zi->z () * sf << endl;
+        }
 
         plast = pp;
         ++n;

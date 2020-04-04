@@ -53,6 +53,7 @@ DXFWriterOptionPage::setup (const db::FormatSpecificWriterOptions *o, const db::
   const db::DXFWriterOptions *options = dynamic_cast<const db::DXFWriterOptions *> (o);
   if (options) {
     mp_ui->polygon_mode_cbx->setCurrentIndex (options->polygon_mode);
+    mp_ui->path_mode_cbx->setCurrentIndex (options->path_mode);
   }
 }
 
@@ -62,6 +63,7 @@ DXFWriterOptionPage::commit (db::FormatSpecificWriterOptions *o, const db::Techn
   db::DXFWriterOptions *options = dynamic_cast<db::DXFWriterOptions *> (o);
   if (options) {
     options->polygon_mode = mp_ui->polygon_mode_cbx->currentIndex ();
+    options->path_mode = mp_ui->path_mode_cbx->currentIndex ();
   }
 }
 

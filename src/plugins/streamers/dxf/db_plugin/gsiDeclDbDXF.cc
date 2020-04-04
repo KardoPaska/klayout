@@ -366,6 +366,20 @@ static int get_dxf_polygon_mode (const db::SaveLayoutOptions *options)
   return options->get_options<db::DXFWriterOptions> ().polygon_mode;
 }
 
+static void set_dxf_path_mode (db::SaveLayoutOptions *options, int mode)
+{
+  if (mode < 0 || mode > 4) {
+    throw tl::Exception (tl::to_string (tr ("Invalid polygon mode")));
+  }
+
+  options->get_options<db::DXFWriterOptions> ().path_mode = mode;
+}
+
+static int get_dxf_path_mode (const db::SaveLayoutOptions *options)
+{
+  return options->get_options<db::DXFWriterOptions> ().path_mode;
+}
+
 //  extend lay::SaveLayoutOptions with the DXF options
 static
 gsi::ClassExt<db::SaveLayoutOptions> dxf_writer_options (
@@ -373,12 +387,22 @@ gsi::ClassExt<db::SaveLayoutOptions> dxf_writer_options (
     "@brief Specifies how to write polygons.\n"
     "The mode is 0 (write POLYLINE entities), 1 (write LWPOLYLINE entities), 2 (decompose into SOLID entities), "
     "3 (write HATCH entities), or 4 (write LINE entities).\n"
-    "\nThis property has been added in version 0.21.3. '4', in version 0.25.6.\n"
+    "\nThis property has been added in version 0.21.3. Mode '4', in version 0.25.6.\n"
   ) +
   gsi::method_ext ("dxf_polygon_mode", &get_dxf_polygon_mode,
     "@brief Specifies how to write polygons.\n"
     "See \\dxf_polygon_mode= for a description of this property.\n"
     "\nThis property has been added in version 0.21.3.\n"
+  ) +
+  gsi::method_ext ("dxf_path_mode=", &set_dxf_path_mode, gsi::arg ("mode"),
+    "@brief Specifies how to write path.\n"
+    "The mode is 0 (write POLYLINE entities with the path's width), 1 (write as polygons - polygon mode applies).\n"
+    "\nThis property has been added in version 0.26.5.\n"
+  ) +
+  gsi::method_ext ("dxf_path_mode", &get_dxf_path_mode,
+    "@brief Specifies how to write paths.\n"
+    "See \\dxf_path_mode= for a description of this property.\n"
+    "\nThis property has been added in version 0.26.5.\n"
   ),
   ""
 );

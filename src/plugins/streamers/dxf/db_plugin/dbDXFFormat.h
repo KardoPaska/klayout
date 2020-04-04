@@ -201,7 +201,7 @@ public:
    *  @brief The constructor
    */
   DXFWriterOptions ()
-    : polygon_mode (0)
+    : polygon_mode (0), path_mode (0)
   {
     //  .. nothing yet ..
   }
@@ -217,7 +217,15 @@ public:
    */
   int polygon_mode;
 
-  /** 
+  /**
+   *  @brief Path mode
+   *
+   *  0: create POLYLINE with path's width
+   *  1: convert to Polygon
+   */
+  int path_mode;
+
+  /**
    *  @brief Implementation of FormatSpecificWriterOptions
    */
   virtual FormatSpecificWriterOptions *clone () const

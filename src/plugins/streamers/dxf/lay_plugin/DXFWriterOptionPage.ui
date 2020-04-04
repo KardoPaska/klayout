@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>DXFWriterOptionPage</class>
- <widget class="QWidget" name="DXFWriterOptionPage" >
-  <property name="geometry" >
+ <widget class="QWidget" name="DXFWriterOptionPage">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,73 +10,113 @@
     <height>164</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
+   </property>
    <item>
-    <widget class="QGroupBox" name="groupBox" >
-     <property name="title" >
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
       <string>DXF Writer Options</string>
      </property>
-     <layout class="QGridLayout" >
-      <property name="margin" >
+     <layout class="QGridLayout">
+      <property name="leftMargin">
        <number>9</number>
       </property>
-      <property name="spacing" >
+      <property name="topMargin">
+       <number>9</number>
+      </property>
+      <property name="rightMargin">
+       <number>9</number>
+      </property>
+      <property name="bottomMargin">
+       <number>9</number>
+      </property>
+      <property name="spacing">
        <number>6</number>
       </property>
-      <item row="0" column="0" >
-       <widget class="QLabel" name="label" >
-        <property name="text" >
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
          <string>Polygon handling</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="2" >
-       <spacer>
-        <property name="orientation" >
-         <enum>Qt::Horizontal</enum>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="polygon_mode_cbx">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-        <property name="sizeHint" >
-         <size>
-          <width>371</width>
-          <height>20</height>
-         </size>
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContents</enum>
         </property>
-       </spacer>
-      </item>
-      <item row="0" column="1" >
-       <widget class="QComboBox" name="polygon_mode_cbx" >
         <item>
-         <property name="text" >
+         <property name="text">
           <string>Write POLYLINE entity</string>
          </property>
         </item>
         <item>
-         <property name="text" >
+         <property name="text">
           <string>Write LWPOLYLINE entity</string>
          </property>
         </item>
         <item>
-         <property name="text" >
+         <property name="text">
           <string>Decompose into SOLID entities</string>
          </property>
         </item>
         <item>
-         <property name="text" >
+         <property name="text">
           <string>Write HATCH entity</string>
          </property>
         </item>
         <item>
-         <property name="text" >
+         <property name="text">
           <string>Write LINE entity</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Path handling</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="path_mode_cbx">
+        <item>
+         <property name="text">
+          <string>Write POLYLINE entity with path's width</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Write LWPOLYLINE entity with path's width</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Write as polygons (polygon handling applies)</string>
          </property>
         </item>
        </widget>
@@ -85,10 +126,10 @@
    </item>
    <item>
     <spacer>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <property name="sizeHint" >
+     <property name="sizeHint" stdset="0">
       <size>
        <width>601</width>
        <height>20</height>
