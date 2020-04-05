@@ -337,8 +337,14 @@ gsi::ClassExt<db::LoadLayoutOptions> dxf_reader_options (
   ) +
   gsi::method_ext ("dxf_polyline_mode=", &set_dxf_polyline_mode, gsi::arg ("mode"),
     "@brief Specifies how to treat POLYLINE/LWPOLYLINE entities.\n"
-    "The mode is 0 (automatic), 1 (keep lines), 2 (create polygons from closed polylines with width = 0), "
-    "3 (merge all lines with width = 0 into polygons), 4 (as 3 plus auto-close open contours).\n"
+    "The mode argument is:\n"
+    "@ul\n"
+    "@li 0: automatic (best guess) @/li\n"
+    "@li 1: keep lines (POLYLINE segments are converted into zero-width edges) @/li\n"
+    "@li 2: create polygons from closed polylines with zero width @/li\n"
+    "@li 3: merge all lines with zero width into polygon @/li\n"
+    "@li 4: as 3 plus auto-close open contours @/li\n"
+    "@/ul\n"
     "\nThis property has been added in version 0.21.3.\n"
   ) +
   gsi::method_ext ("dxf_polyline_mode", &get_dxf_polyline_mode,
@@ -385,8 +391,14 @@ static
 gsi::ClassExt<db::SaveLayoutOptions> dxf_writer_options (
   gsi::method_ext ("dxf_polygon_mode=", &set_dxf_polygon_mode, gsi::arg ("mode"),
     "@brief Specifies how to write polygons.\n"
-    "The mode is 0 (write POLYLINE entities), 1 (write LWPOLYLINE entities), 2 (decompose into SOLID entities), "
-    "3 (write HATCH entities), or 4 (write LINE entities).\n"
+    "The mode argument is:\n"
+    "@ul\n"
+    "@li 0: write POLYLINE entities @/li\n"
+    "@li 1: write LWPOLYLINE entities @/li\n"
+    "@li 2: decompose into SOLID entities @/li\n"
+    "@li 3: write HATCH entities @/li\n"
+    "@li 4: write LINE entities @/li\n"
+    "@/ul\n"
     "\nThis property has been added in version 0.21.3. Mode '4', in version 0.25.6.\n"
   ) +
   gsi::method_ext ("dxf_polygon_mode", &get_dxf_polygon_mode,
@@ -395,8 +407,13 @@ gsi::ClassExt<db::SaveLayoutOptions> dxf_writer_options (
     "\nThis property has been added in version 0.21.3.\n"
   ) +
   gsi::method_ext ("dxf_path_mode=", &set_dxf_path_mode, gsi::arg ("mode"),
-    "@brief Specifies how to write path.\n"
-    "The mode is 0 (write POLYLINE entities with the path's width), 1 (write as polygons - polygon mode applies).\n"
+    "@brief Specifies how to write paths.\n"
+    "The mode argument is:\n"
+    "@ul\n"
+    "@li 0: write POLYLINE entities with the path's width @/li\n"
+    "@li 1: write LWPOLYLINE entities with the path's width @/li\n"
+    "@li 2: convert into polygons (\\dxf_polygon_mode applies) @/li\n"
+    "@/ul\n"
     "\nThis property has been added in version 0.26.5.\n"
   ) +
   gsi::method_ext ("dxf_path_mode", &get_dxf_path_mode,
