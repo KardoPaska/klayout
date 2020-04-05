@@ -83,6 +83,20 @@ TEST(Writer1z)
   run_test (_this, "writer1z.oas", "writer1_au.oas", opt);
 }
 
+TEST(Writer1p1)
+{
+  db::DXFWriterOptions opt;
+  opt.path_mode = 1;
+  run_test (_this, "writer1p1.oas", "writer1p1_au.oas", opt);
+}
+
+TEST(Writer1p2)
+{
+  db::DXFWriterOptions opt;
+  opt.path_mode = 2;
+  run_test (_this, "writer1p2.oas", "writer1p2_au.oas", opt);
+}
+
 TEST(Writer2)
 {
   db::DXFWriterOptions opt;
