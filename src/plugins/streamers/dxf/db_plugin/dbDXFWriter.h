@@ -93,7 +93,7 @@ private:
 
   void write_texts (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_polygons (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
-  void write_polygon (const db::Polygon &polygon, double tl_scale, const ZInfo *zinfo);
+  void write_polygon (const db::Polygon &polygon, double tl_scale, const ZInfo *zinfo, bool internal = false);
   void write_boxes (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_paths (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);
   void write_edges (const db::Layout &layout, const db::Cell &cell, unsigned int layer, double tl_scale);

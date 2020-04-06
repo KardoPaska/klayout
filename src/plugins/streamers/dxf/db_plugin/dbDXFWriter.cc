@@ -420,7 +420,7 @@ DXFWriter::write_polygons (const db::Layout &layout, const db::Cell &cell, unsig
 }
 
 void 
-DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zinfo)
+DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zinfo, bool internal)
 {
   if (m_options.polygon_mode == 0) {
 
@@ -471,7 +471,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
 
   } else if (m_options.polygon_mode == 2) {
 
-    if (polygon.holes () > 0) {
+    if (polygon.holes () > 0 || ! internal) {
 
       //  resolve holes or merge polygon as a preparation step for split_polygon which only works properly
       //  on merged polygons ...
@@ -485,7 +485,54 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
       ep.process (out, op);
 
       for (std::vector<db::Polygon>::const_iterator p = polygons.begin (); p != polygons.end (); ++p) {
-        write_polygon (*p, sf, zinfo);
+        write_polygon (*p, sf, zinfo, true);
+      }
+
+      if (zinfo && zinfo->dz () > 0) {
+
+        //  For the walls use the polygons with holes
+        ep.clear ();
+        polygons.clear ();
+
+        ep.insert_sequence (polygon.begin_edge ());
+        db::PolygonContainer pc (polygons);
+        db::PolygonGenerator out (pc, false /*don't resolve holes*/, false /*min coherence for splitting*/);
+        db::SimpleMerge op;
+        ep.process (out, op);
+
+        for (std::vector<db::Polygon>::const_iterator p = polygons.begin (); p != polygons.end (); ++p) {
+
+          double z1 = zinfo->z () * sf;
+          double z2 = (zinfo->z () + zinfo->dz ()) * sf;
+
+          //  build a SOLID wall from the edges
+          for (db::Polygon::polygon_edge_iterator e = p->begin_edge (); ! e.at_end (); ++e) {
+
+            db::DEdge ee = db::DEdge (*e) * sf;
+
+            *this << 0 << endl << "SOLID" << endl;
+            *this << 8 << endl; emit_layer (m_layer);
+
+            *this << 10 << endl << ee.p1 ().x () << endl;
+            *this << 20 << endl << ee.p1 ().y () << endl;
+            *this << 30 << endl << z1 << endl;
+
+            *this << 11 << endl << ee.p2 ().x () << endl;
+            *this << 21 << endl << ee.p2 ().y () << endl;
+            *this << 31 << endl << z1 << endl;
+
+            *this << 12 << endl << ee.p1 ().x () << endl;
+            *this << 22 << endl << ee.p1 ().y () << endl;
+            *this << 32 << endl << z2 << endl;
+
+            *this << 13 << endl << ee.p2 ().x () << endl;
+            *this << 23 << endl << ee.p2 ().y () << endl;
+            *this << 33 << endl << z2 << endl;
+
+          }
+
+        }
+
       }
 
     } else if (polygon.vertices () > 4) {
@@ -493,67 +540,58 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
       std::vector <db::Polygon> polygons;
       db::split_polygon (polygon, polygons);
       for (std::vector<db::Polygon>::const_iterator p = polygons.begin (); p != polygons.end (); ++p) {
-        write_polygon (*p, sf, zinfo);
+        write_polygon (*p, sf, zinfo, true);
       }
 
     } else if (polygon.vertices () >= 3) {
 
-      *this << 0 << endl << "SOLID" << endl;
-      *this << 8 << endl; emit_layer (m_layer);
-      if (zinfo) {
-        *this << 39 << endl << zinfo->dz () * sf << endl;
-      }
+      for (int with_z = 0; with_z < 2; ++with_z) {
 
-      double x [4], y [4];
-      unsigned int i = 0;
-      for (db::Polygon::polygon_contour_iterator p = polygon.begin_hull (); p != polygon.end_hull (); ++p) {
-        x [i] = (*p).x () * sf;
-        y [i] = (*p).y () * sf;
-        ++i;
-      }
+        if (with_z > 0 && (! zinfo || zinfo->dz () <= 0)) {
+          break;
+        }
 
-      if (i == 4) {
+        *this << 0 << endl << "SOLID" << endl;
+        *this << 8 << endl; emit_layer (m_layer);
+
+        double x [4], y [4];
+        unsigned int i = 0;
+        for (db::Polygon::polygon_contour_iterator p = polygon.begin_hull (); p != polygon.end_hull (); ++p) {
+          x [i] = (*p).x () * sf;
+          y [i] = (*p).y () * sf;
+          ++i;
+        }
+
+        double z = 0.0;
+        if (zinfo) {
+          if (with_z == 0) {
+            z = zinfo->z () * sf;
+          } else {
+            z = (zinfo->z () + zinfo->dz ()) * sf;
+          }
+        }
+
         *this << 10 << endl << x[0] << endl;
         *this << 20 << endl << y[0] << endl;
         if (zinfo) {
-          *this << 30 << endl << zinfo->z () * sf << endl;
+          *this << 30 << endl << z << endl;
         }
         *this << 11 << endl << x[1] << endl;
         *this << 21 << endl << y[1] << endl;
         if (zinfo) {
-          *this << 31 << endl << zinfo->z () * sf << endl;
+          *this << 31 << endl << z << endl;
         }
-        *this << 12 << endl << x[3] << endl;
-        *this << 22 << endl << y[3] << endl;
+        *this << 12 << endl << x[i == 4 ? 3 : 2] << endl;
+        *this << 22 << endl << y[i == 4 ? 3 : 2] << endl;
         if (zinfo) {
-          *this << 32 << endl << zinfo->z () * sf << endl;
+          *this << 32 << endl << z << endl;
         }
         *this << 13 << endl << x[2] << endl;
         *this << 23 << endl << y[2] << endl;
         if (zinfo) {
-          *this << 33 << endl << zinfo->z () * sf << endl;
+          *this << 33 << endl << z << endl;
         }
-      } else {
-        *this << 10 << endl << x[0] << endl;
-        *this << 20 << endl << y[0] << endl;
-        if (zinfo) {
-          *this << 30 << endl << zinfo->z () * sf << endl;
-        }
-        *this << 11 << endl << x[1] << endl;
-        *this << 21 << endl << y[1] << endl;
-        if (zinfo) {
-          *this << 31 << endl << zinfo->z () * sf << endl;
-        }
-        *this << 12 << endl << x[2] << endl;
-        *this << 22 << endl << y[2] << endl;
-        if (zinfo) {
-          *this << 32 << endl << zinfo->z () * sf << endl;
-        }
-        *this << 13 << endl << x[2] << endl;
-        *this << 23 << endl << y[2] << endl;
-        if (zinfo) {
-          *this << 33 << endl << zinfo->z () * sf << endl;
-        }
+
       }
 
     }
