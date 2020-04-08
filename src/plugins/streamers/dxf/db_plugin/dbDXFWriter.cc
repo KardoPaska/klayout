@@ -20,6 +20,10 @@
 
 */
 
+/*
+  @@@ TODO:
+  * Make 3DFACE vs. SOLID configurable, document
+*/
 
 #include "dbDXFWriter.h"
 #include "dbPolygonGenerators.h"
@@ -38,7 +42,8 @@ namespace db
 
 DXFWriter::DXFWriter ()
   : mp_stream (0),
-    m_progress (tl::to_string (tr ("Writing DXF file")), 10000)
+    m_progress (tl::to_string (tr ("Writing DXF file")), 10000),
+    m_use_zinfo (true)
 {
   m_progress.set_format (tl::to_string (tr ("%.0f MB")));
   m_progress.set_unit (1024 * 1024);
@@ -95,6 +100,9 @@ DXFWriter::write (const db::Layout &layout, const db::Cell &cref, const std::set
         *this << 2 << endl << layout.cell_name (inst->cell_index ()) << endl;
         *this << 10 << endl << d.x () * sf << endl;
         *this << 20 << endl << d.y () * sf << endl;
+        if (m_use_zinfo) {
+            *this << 30 << endl << 0.0 << endl;
+        }
         *this << 41 << endl << t.mag () << endl;
         *this << 42 << endl << (t.is_mirror () ? -t.mag () : t.mag ()) << endl;
         *this << 50 << endl << t.angle () << endl;
@@ -135,42 +143,7 @@ DXFWriter::write (db::Layout &layout, tl::OutputStream &stream, const db::SaveLa
   std::set <db::cell_index_type> cell_set;
   options.get_cells (layout, cell_set, layers);
 
-  //  header
-  *this << 0 << endl << "SECTION" << endl;
-  *this << 2 << endl << "HEADER" << endl;
-  //  fake a dummy AutoCAD version (apparent required by some tools)
-  *this << 9 << endl << "$ACADVER" << endl;
-  *this << 1 << endl << "AC1006" << endl;
-  *this << 0 << endl << "ENDSEC" << endl;
-
-  //  layer table
-  *this << 0 << endl << "SECTION" << endl;
-  *this << 2 << endl << "TABLES" << endl;
-  *this << 0 << endl << "TABLE" << endl;
-  *this << 2 << endl << "LAYER" << endl;
-  *this << 70 << endl << layers.size () << endl;
-
-  //  colors are simply numbered starting from 1 currently, linestyle is "CONTINUOUS" currently.
-  int color = 1;
-  std::string linestyle = "CONTINUOUS";
-
-  for (std::vector <std::pair <unsigned int, db::LayerProperties> >::const_iterator l = layers.begin (); l != layers.end (); ++l) {
-
-    *this << 0 << endl << "LAYER" << endl;
-    *this << 70 << endl << 0 << endl;               //  flags: seems to be required by some tools
-    *this << 62 << endl << color << endl;           //  color
-    *this << 6 << endl << linestyle << endl;     //  line style
-    *this << 2 << endl;
-    emit_layer (l->second);
-
-    color += 1;
-
-  }
-
-  *this << 0 << endl << "ENDTAB" << endl;
-  *this << 0 << endl << "ENDSEC" << endl;
-
-  //  create a cell index vector sorted bottom-up
+  //  create a cell index vector sorted bottom-up and determine top cell
   std::vector <db::cell_index_type> cells;
   cells.reserve (cell_set.size ());
   const db::Cell *top_cell = 0;
@@ -203,6 +176,60 @@ DXFWriter::write (db::Layout &layout, tl::OutputStream &stream, const db::SaveLa
 
   }
 
+  db::Box ext (0, 0, 0, 0);
+  if (top_cell) {
+    ext = top_cell->bbox ();
+  }
+
+  //  header
+  *this << 0 << endl << "SECTION" << endl;
+  *this << 2 << endl << "HEADER" << endl;
+  //  fake a dummy AutoCAD version (apparent required by some tools)
+  *this << 9 << endl << "$ACADVER" << endl;
+  *this << 1 << endl << "AC1006" << endl;
+  //  extensions
+  //  TODO: z extension too?
+  *this << 9 << endl << "$INSBASE" << endl;
+  *this << 10 << endl << 0 << endl;
+  *this << 20 << endl << 0 << endl;
+  *this << 30 << endl << 0 << endl;
+  *this << 9 << endl << "$EXTMIN" << endl;
+  *this << 10 << endl << ext.left () * sf << endl;
+  *this << 20 << endl << ext.bottom () * sf << endl;
+  *this << 30 << endl << 0 << endl;
+  *this << 9 << endl << "$EXTMAX" << endl;
+  *this << 10 << endl << ext.right () * sf << endl;
+  *this << 20 << endl << ext.top () * sf << endl;
+  *this << 30 << endl << 0 << endl;
+  *this << 0 << endl << "ENDSEC" << endl;
+
+  //  layer table
+  *this << 0 << endl << "SECTION" << endl;
+  *this << 2 << endl << "TABLES" << endl;
+  *this << 0 << endl << "TABLE" << endl;
+  *this << 2 << endl << "LAYER" << endl;
+  *this << 70 << endl << layers.size () << endl;
+
+  //  colors are simply numbered starting from 1 currently, linestyle is "CONTINUOUS" currently.
+  int color = 1;
+  std::string linestyle = "CONTINUOUS";
+
+  for (std::vector <std::pair <unsigned int, db::LayerProperties> >::const_iterator l = layers.begin (); l != layers.end (); ++l) {
+
+    *this << 0 << endl << "LAYER" << endl;
+    *this << 70 << endl << 0 << endl;               //  flags: seems to be required by some tools
+    *this << 62 << endl << color << endl;           //  color
+    *this << 6 << endl << linestyle << endl;     //  line style
+    *this << 2 << endl;
+    emit_layer (l->second);
+
+    color += 1;
+
+  }
+
+  *this << 0 << endl << "ENDTAB" << endl;
+  *this << 0 << endl << "ENDSEC" << endl;
+
   //  body
   *this << 0 << endl << "SECTION" << endl;
   *this << 2 << endl << "BLOCKS" << endl;
@@ -224,6 +251,9 @@ DXFWriter::write (db::Layout &layout, tl::OutputStream &stream, const db::SaveLa
     //  base point x, y
     *this << 10 << endl << 0.0 << endl;
     *this << 20 << endl << 0.0 << endl;
+    if (m_use_zinfo) {
+        *this << 30 << endl << 0.0 << endl;
+    }
 
     //  write cell
     write (layout, cref, cell_set, layers, sf);
@@ -269,8 +299,14 @@ DXFWriter::emit_layer(const db::LayerProperties &lp)
 const DXFWriter::ZInfo *
 DXFWriter::zinfo (const db::Layout &layout, db::properties_id_type prop_id)
 {
-  if (! prop_id || ! m_dxf_zstart_id.first || ! m_dxf_zstop_id.first) {
+  if (! m_use_zinfo) {
     return 0;
+  }
+
+  static ZInfo flat (0, 0);
+
+  if (! prop_id || ! m_dxf_zstart_id.first || ! m_dxf_zstop_id.first) {
+    return &flat;
   }
 
   std::map<db::properties_id_type, const ZInfo *>::const_iterator p = m_zinfo_from_prop_id.find (prop_id);
@@ -294,7 +330,7 @@ DXFWriter::zinfo (const db::Layout &layout, db::properties_id_type prop_id)
     return &m_zinfo.back ();
 
   } else {
-    return 0;
+    return &flat;
   }
 }
 
@@ -335,6 +371,10 @@ DXFWriter::write_texts (const db::Layout & /*layout*/, const db::Cell &cell, uns
       *this << 8 << endl; emit_layer (m_layer);
       *this << 10 << endl << p.x () * sf << endl;
       *this << 20 << endl << p.y () * sf << endl;
+      if (m_use_zinfo) {
+        //  TODO: enable z position?
+        *this << 30 << endl << 0.0 << endl;
+      }
       *this << 40 << endl << shape->text_size () * sf << endl;
 
       int v = 1;
@@ -370,6 +410,10 @@ DXFWriter::write_texts (const db::Layout & /*layout*/, const db::Cell &cell, uns
       *this << 8 << endl; emit_layer (m_layer);
       *this << 10 << endl << p.x () * sf << endl;
       *this << 20 << endl << p.y () * sf << endl;
+      if (m_use_zinfo) {
+        //  TODO: enable z position?
+        *this << 30 << endl << 0.0 << endl;
+      }
       *this << 40 << endl << shape->text_size () * sf << endl;
       *this << 1 << endl << chunks.front () << endl;
       *this << 50 << endl << (shape->text_trans ().rot () % 4) * 90.0 << endl;
@@ -505,12 +549,12 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
           double z1 = zinfo->z () * sf;
           double z2 = (zinfo->z () + zinfo->dz ()) * sf;
 
-          //  build a SOLID wall from the edges
+          //  build a SOLID/3DFACE wall from the edges
           for (db::Polygon::polygon_edge_iterator e = p->begin_edge (); ! e.at_end (); ++e) {
 
             db::DEdge ee = db::DEdge (*e) * sf;
 
-            *this << 0 << endl << "SOLID" << endl;
+            *this << 0 << endl << (!m_use_zinfo ? "SOLID" : "3DFACE") << endl;
             *this << 8 << endl; emit_layer (m_layer);
 
             *this << 10 << endl << ee.p1 ().x () << endl;
@@ -521,12 +565,12 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
             *this << 21 << endl << ee.p2 ().y () << endl;
             *this << 31 << endl << z1 << endl;
 
-            *this << 12 << endl << ee.p1 ().x () << endl;
-            *this << 22 << endl << ee.p1 ().y () << endl;
+            *this << 12 << endl << ee.p2 ().x () << endl;
+            *this << 22 << endl << ee.p2 ().y () << endl;
             *this << 32 << endl << z2 << endl;
 
-            *this << 13 << endl << ee.p2 ().x () << endl;
-            *this << 23 << endl << ee.p2 ().y () << endl;
+            *this << 13 << endl << ee.p1 ().x () << endl;
+            *this << 23 << endl << ee.p1 ().y () << endl;
             *this << 33 << endl << z2 << endl;
 
           }
@@ -551,7 +595,7 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
           break;
         }
 
-        *this << 0 << endl << "SOLID" << endl;
+        *this << 0 << endl << (!m_use_zinfo ? "SOLID" : "3DFACE") << endl;
         *this << 8 << endl; emit_layer (m_layer);
 
         double x [4], y [4];
@@ -561,6 +605,8 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
           y [i] = (*p).y () * sf;
           ++i;
         }
+        std::reverse (x, x + i);
+        std::reverse (y, y + i);
 
         double z = 0.0;
         if (zinfo) {
@@ -581,13 +627,13 @@ DXFWriter::write_polygon (const db::Polygon &polygon, double sf, const ZInfo *zi
         if (zinfo) {
           *this << 31 << endl << z << endl;
         }
-        *this << 12 << endl << x[i == 4 ? 3 : 2] << endl;
-        *this << 22 << endl << y[i == 4 ? 3 : 2] << endl;
+        *this << 12 << endl << x[2] << endl;
+        *this << 22 << endl << y[2] << endl;
         if (zinfo) {
           *this << 32 << endl << z << endl;
         }
-        *this << 13 << endl << x[2] << endl;
-        *this << 23 << endl << y[2] << endl;
+        *this << 13 << endl << x[i == 4 ? 3 : 2] << endl;
+        *this << 23 << endl << y[i == 4 ? 3 : 2] << endl;
         if (zinfo) {
           *this << 33 << endl << z << endl;
         }
