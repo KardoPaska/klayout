@@ -1,5 +1,21 @@
 
-Plan:
+-----------------------------------------------------------------------------------
+DXF enhancements
+
+1. Make 3D support configurable
+
+2. Add tests
+
+DONE 3. DXF block names must not contain "$" or "?" and maybe other
+   characters and there is a max. length -> allow only standard 
+   alphanumerical characters. Max length is 30. 
+
+4. DXF reader should also accept 3DFACE und 3DSOLID and project to z=0
+   (ignore those which become lines by doing so). Remove duplicates
+   arising from top/bottom plates.
+
+-----------------------------------------------------------------------------------
+Application framework refactoring
 
 DONE 1. Combine AbstractMenuProvider, PluginRoot and the AbstractMenuProvider's 
    implementation in MainWindow/LayoutView into lay::Dispatcher

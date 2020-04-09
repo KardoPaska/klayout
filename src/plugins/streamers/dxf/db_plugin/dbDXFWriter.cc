@@ -30,9 +30,11 @@
 #include "dbPolygonTools.h"
 #include "tlStream.h"
 #include "tlUtils.h"
+#include "tlUniqueName.h"
 
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 
 namespace db
 {
@@ -97,7 +99,7 @@ DXFWriter::write (const db::Layout &layout, const db::Cell &cref, const std::set
 
         *this << 0 << endl << "INSERT" << endl;
         *this << 8 << endl << 0 << endl;  // required by TrueView
-        *this << 2 << endl << layout.cell_name (inst->cell_index ()) << endl;
+        *this << 2 << endl << m_cell_names [inst->cell_index ()] << endl;
         *this << 10 << endl << d.x () * sf << endl;
         *this << 20 << endl << d.y () * sf << endl;
         if (m_use_zinfo) {
@@ -126,6 +128,25 @@ DXFWriter::write (const db::Layout &layout, const db::Cell &cref, const std::set
     m_progress.set (mp_stream->pos ());
 
   }
+}
+
+static std::string legal_name (const char *name, std::set<std::string> &used_names)
+{
+  //  some empirical value
+  const int legal_name_length = 30;
+
+  std::string n;
+  n.reserve (strlen (name));
+
+  for (const char *cp = name; *cp; ++cp) {
+    if (isalnum (*cp) || *cp == '_' || *cp == '*') {
+      n += *cp;
+    } else {
+      n += "_";
+    }
+  }
+
+  return tl::unique_name_store (n, used_names, "_", legal_name_length);
 }
 
 void 
@@ -179,6 +200,15 @@ DXFWriter::write (db::Layout &layout, tl::OutputStream &stream, const db::SaveLa
   db::Box ext (0, 0, 0, 0);
   if (top_cell) {
     ext = top_cell->bbox ();
+  }
+
+  //  build a name map for legal names
+  
+  std::set<std::string> used_names;
+  m_cell_names.clear ();
+
+  for (std::vector<db::cell_index_type>::const_iterator cell = cells.begin (); cell != cells.end (); ++cell) {
+    m_cell_names.insert (std::make_pair (*cell, legal_name (layout.cell_name (*cell), used_names)));
   }
 
   //  header
@@ -240,12 +270,13 @@ DXFWriter::write (db::Layout &layout, tl::OutputStream &stream, const db::SaveLa
 
     //  cell body 
     const db::Cell &cref (layout.cell (*cell));
+    const std::string &cell_name = m_cell_names [*cell];
 
     *this << 0 << endl << "BLOCK" << endl;
-    *this << 2 << endl << layout.cell_name (*cell) << endl;
+    *this << 2 << endl << cell_name << endl;
 
     //  this has been determined empirically with TrueView:
-    int flags = (layout.cell_name (*cell) [0] == '*' ? 1 : 0); 
+    int flags = (cell_name [0] == '*' ? 1 : 0); 
     *this << 70 << endl << flags << endl;
 
     //  base point x, y
