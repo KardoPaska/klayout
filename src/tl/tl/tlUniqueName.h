@@ -25,7 +25,8 @@
 #define HDR_tlUniqueName
 
 #include "tlCommon.h"
-#include "tlString.h"
+
+#include <string>
 
 namespace tl
 {
@@ -38,25 +39,16 @@ namespace tl
  *  the separator and an integer disambiguator.
  */
 template <class Set>
-TL_PUBLIC_TEMPLATE std::string unique_name (const std::string &org_name, const Set &present_names, const std::string &sep = "$")
-{
-  if (present_names.find (org_name) == present_names.end ()) {
-    return org_name;
-  }
+TL_PUBLIC_TEMPLATE std::string unique_name (const std::string &org_name, const Set &present_names, const std::string &sep = "$", int max_length = -1);
 
-  std::string b;
-
-  unsigned int j = 0;
-  for (unsigned int m = (unsigned int) 1 << (sizeof (unsigned int) * 8 - 2); m > 0; m >>= 1) {
-    j += m;
-    b = org_name + sep + tl::to_string (j);
-    if (present_names.find (b) == present_names.end ()) {
-      j -= m;
-    }
-  }
-
-  return org_name + sep + tl::to_string (j + 1);
-}
+/**
+ *  @brief An object delivering a unique name given a set of existing names
+ *
+ *  This version is identical to the "unique_name" version, but already updates the "present_names"
+ *  set by adding the new name.
+ */
+template <class Set>
+TL_PUBLIC_TEMPLATE std::string unique_name_store (const std::string &org_name, Set &present_names, const std::string &sep = "$", int max_length = -1);
 
 } // namespace tl
 
