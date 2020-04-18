@@ -78,8 +78,10 @@ private:
   tl::AbsoluteProgress m_progress;
   endl_tag endl;
   db::LayerProperties m_layer;
+  std::map<db::cell_index_type, std::string> m_cell_names;
   std::map<db::properties_id_type, const ZInfo *> m_zinfo_from_prop_id;
   std::list<ZInfo> m_zinfo;
+  bool m_use_zinfo;
   std::pair<bool, db::property_names_id_type> m_dxf_zstart_id, m_dxf_zstop_id;
   
   DXFWriter &operator<<(const char *s);

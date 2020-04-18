@@ -51,3 +51,23 @@ TEST(1)
   names.insert ("");
   EXPECT_EQ (tl::unique_name ("", names), "$1");
 }
+
+//  with length limit
+TEST(2)
+{
+  std::set<std::string> names;
+
+  EXPECT_EQ (tl::unique_name_store ("AB", names, "$", 4), "AB");
+  EXPECT_EQ (tl::unique_name_store ("AB", names, "$", 4), "AB$1");
+  EXPECT_EQ (tl::unique_name_store ("ABC", names, "$", 4), "ABC");
+  EXPECT_EQ (tl::unique_name_store ("ABC", names, "$", 4), "AB$2");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "ABCD");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$3");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$4");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$5");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$6");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$7");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$8");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "AB$9");
+  EXPECT_EQ (tl::unique_name_store ("ABCDEF", names, "$", 4), "A$10");
+}
