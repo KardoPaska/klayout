@@ -34,6 +34,7 @@ EdgePairsDelegate::EdgePairsDelegate ()
 }
 
 EdgePairsDelegate::EdgePairsDelegate (const EdgePairsDelegate &other)
+  : ShapeCollectionDelegateBase ()
 {
   operator= (other);
 }

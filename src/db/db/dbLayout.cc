@@ -32,6 +32,9 @@
 #include "dbLibraryManager.h"
 #include "dbLibrary.h"
 #include "dbRegion.h"
+#include "dbEdgePairs.h"
+#include "dbEdges.h"
+#include "dbTexts.h"
 #include "tlTimer.h"
 #include "tlLog.h"
 #include "tlInternational.h"
@@ -290,6 +293,8 @@ Layout::Layout (const db::Layout &layout)
   : db::Object (layout),
     db::LayoutStateModel (),
     gsi::ObjectBase (),
+    tl::Object (),
+    tl::UniqueId (),
     m_cells_size (0),
     m_invalid (0),
     m_top_cells (0),
@@ -657,6 +662,12 @@ void
 Layout::insert (db::cell_index_type cell, int layer, const db::EdgePairs &edge_pairs)
 {
   edge_pairs.insert_into (this, cell, layer);
+}
+
+void
+Layout::insert (db::cell_index_type cell, int layer, const db::Texts &texts)
+{
+  texts.insert_into (this, cell, layer);
 }
 
 void

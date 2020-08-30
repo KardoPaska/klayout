@@ -38,6 +38,7 @@ RegionDelegate::RegionDelegate ()
 }
 
 RegionDelegate::RegionDelegate (const RegionDelegate &other)
+  : ShapeCollectionDelegateBase ()
 {
   operator= (other);
 }
